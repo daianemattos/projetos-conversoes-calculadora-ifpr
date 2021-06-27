@@ -19,12 +19,12 @@
                     :items="itemsSelect"
                     label="Opções"
                     outlined
-                    @change="alterarTela"
+                    @change="limpar"
                   ></v-select>
                 </v-col>
               </v-row>
 
-              <v-row v-if="conversoes" align="center" justify="center" class="pa-2">
+              <v-row v-if="itemSelect === 'conversoes'" align="center" justify="center" class="pa-2">
                 <v-col cols="12" md="6">
                   <v-select
                     v-model="itemConversoes"
@@ -42,7 +42,7 @@
                   ></v-text-field>
                 </v-col>
               </v-row>
-              <v-row  v-if="conversoes" align="center" justify="center" class="pa-2">
+              <v-row  v-if="itemSelect === 'conversoes'" align="center" justify="center" class="pa-2">
                 <v-btn
                   color="success"
                   align="center"
@@ -54,7 +54,7 @@
                 </v-btn>
               </v-row>
 
-              <v-row v-if="calculos" align="center" justify="center" class="pa-2">
+              <v-row v-if="itemSelect === 'calculos'" align="center" justify="center" class="pa-2">
                 <v-col cols="12" md="5">
                   <v-text-field
                     v-model="valor1"
@@ -78,7 +78,7 @@
                   ></v-text-field>
                 </v-col>
               </v-row>
-              <v-row  v-if="calculos" align="center" justify="center" class="pa-2">
+              <v-row  v-if="itemSelect === 'calculos'" align="center" justify="center" class="pa-2">
                 <v-btn
                   color="success"
                   align="center"
@@ -116,20 +116,18 @@ export default {
   name: 'Conversoes',
 
   data: () => ({
-    itemSelect: null,
+    itemSelect: 'conversoes',
     itemConversoes: null,
     itemCalculadora: null,
     valor: null,
     valor1: null,
     valor2: null,
     resultado: null,
-    conversoes: true,
-    calculos: false,
     
     itemsSelect: [{
       text: 'Conversões', value: 'conversoes'
     }, {
-      text: 'Cálculos', value: 'calculos'
+      text: 'Cálculos', value: 'calculos' 
     }],
 
     itemsConversoes: [{
@@ -162,12 +160,6 @@ export default {
       this.resultado = null
     },
 
-    alterarTela() {
-      this.limpar()
-      this.conversoes = !this.conversoes
-      this.calculos = !this.calculos
-    },
-
     converter() {
       switch (this.itemConversoes) {
         case 'decimal_binario':
@@ -197,7 +189,10 @@ export default {
           this.somar(this.valor1, this.valor2)
           break
         case 'subracao':
-            this.subtrair(this.valor1, this.valor2)
+          this.subtrair(this.valor1, this.valor2)
+          break
+        case 'multiplicacao':
+          this.multiplicar(this.valor1, this.valor2)
       }
     },
 
@@ -318,7 +313,23 @@ export default {
       }
     },
 
+    verificarBinario (num) {
+      num = num + ''
+      let result = true
+      num.split('').forEach(n => {
+        if (n != '1' && n != '0') {
+          result = false
+        }
+      })
+      return result     
+    },
+
     somar(valor1, valor2) {
+      if (!this.verificarBinario(valor1) || !this.verificarBinario(valor2)) {
+        this.resultado = 'Valor inválido'
+        return false
+      }
+
       if (valor1?.length > valor2?.length) {
         valor2 = valor2.padStart(valor1.length, '0')
       } else if (valor2?.length > valor1?.length) {
@@ -368,12 +379,18 @@ export default {
     },
 
     subtrair(valor1, valor2) {
+      if (!this.verificarBinario(valor1) || !this.verificarBinario(valor2)) {
+        this.resultado = 'Valor inválido'
+        return false
+      }
+
       let maior = ''
       let negativo = false
+
       if (valor1.length > valor2.length) {
         maior = valor1.length
         valor2 = valor2.padStart(valor1.length, '0')
-      } else if (valor2.length > valor1.length) {
+      } else {
         maior = valor2.length
         valor1 = valor1.padStart(valor2.length, '0')
       }
@@ -400,8 +417,33 @@ export default {
           let remove = resultado.length - (maior)
           resultado = resultado.substring(remove, resultado.length);
         }
-        this.resultado = resultado
       }
+      this.resultado = resultado
+    },
+
+    multiplicar(valor1, valor2) {
+      if (!this.verificarBinario(valor1) || !this.verificarBinario(valor2)) {
+        this.resultado = 'Valor inválido'
+        return false
+      }
+
+      if (valor1.length > valor2.length) {
+        valor2 = valor2.padStart(valor1.length, '0')
+      } else {
+        valor1 = valor1.padStart(valor2.length, '0')
+      }
+      
+      let resultado = '0';
+
+      for(let i = valor2.length - 1, j = 0; i >= 0; i--, j++) {
+
+          if(valor2[i] === '1') {
+            resultado = this.somar(resultado, valor1 + "0".repeat(j));
+            console.log(resultado)
+          }
+      }
+
+      this.resultado = resultado;
     },
 
     complementar(valor) {
